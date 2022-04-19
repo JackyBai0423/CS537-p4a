@@ -101,6 +101,9 @@ exec(char *path, char **argv)
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);
+
+  // BOQI added
+  mencrypt(0, curproc->size);
   return 0;
 
  bad:

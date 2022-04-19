@@ -162,9 +162,15 @@ growproc(int n)
   struct proc *curproc = myproc();
 
   sz = curproc->sz;
+
+  // add new thing  BOQI
+  int page_num = sz/PGSIZE;
+
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
+    //add new thing BOQI
+    mencrypt((void*)curproc->sz,page_num);
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
