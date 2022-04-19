@@ -274,6 +274,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     pte = walkpgdir(pgdir, (char*)a, 0);
     if(!pte)
       a = PGADDR(PDX(a) + 1, 0, 0) - PGSIZE;
+      //need  Modify 
+
     else if((*pte & (PTE_P | PTE_E)) != 0){
       pa = PTE_ADDR(*pte);
       if(pa == 0)
@@ -298,6 +300,8 @@ freevm(pde_t *pgdir)
   deallocuvm(pgdir, KERNBASE, 0);
   for(i = 0; i < NPDENTRIES; i++){
     if(pgdir[i] & (PTE_P | PTE_E)){
+      // need modify 
+
       char * v = P2V(PTE_ADDR(pgdir[i]));
       kfree(v);
     }
@@ -333,7 +337,7 @@ copyuvm(pde_t *pgdir, uint sz)
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("p4Debug: inside copyuvm, pte should exist");
-    if(!(*pte & (PTE_P | PTE_E)))
+    if(!(*pte & (PTE_P | PTE_E))) // may need modify
       panic("p4Debug: inside copyuvm, page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
@@ -362,6 +366,8 @@ uva2ka(pde_t *pgdir, char *uva)
   pte = walkpgdir(pgdir, uva, 0);
   // p4Debug: Check for page's present and encrypted flags.
   if(((*pte & PTE_P) | (*pte & PTE_E)) == 0)
+  // may need modify
+
     return 0;
   if((*pte & PTE_U) == 0)
     return 0;
@@ -506,40 +512,83 @@ int mencrypt(char *virtual_addr, int len) {
   return 0;
 }
 
-int getpgtable(struct pt_entry* pt_entries, int num) {
-  cprintf("p4Debug: getpgtable: %p, %d\n", pt_entries, num);
+int getpgtable(struct pt_entry* pt_entries, int num, int wsetOnly) {
+  cprintf("p4Debug: getpgtable: %p, %d, %d\n", pt_entries, num, wsetOnly);
+  
+  int cnt = 0;
+  int page_num = ((myproc()->sz -PGSIZE)/ PGSIZE);
+  if(pt_entries == 0) return -1;
+  for(int i = n; i >=0 && page_num < num; page_num++,i--){
+    char *page = (char *)(i << 12);
+    pte_t *pte = walkpgdir(myproc->pgdir, page, 0);
 
-  struct proc *curproc = myproc();
-  pde_t *pgdir = curproc->pgdir;
-  uint uva = 0;
-  if (curproc->sz % PGSIZE == 0)
-    uva = curproc->sz - PGSIZE;
-  else 
-    uva = PGROUNDDOWN(curproc->sz);
-
-  int i = 0;
-  for (;;uva -=PGSIZE)
-  {
-    
-    pte_t *pte = walkpgdir(pgdir, (const void *)uva, 0);
-
-    if (!(*pte & PTE_U) || !(*pte & (PTE_P | PTE_E)))
+    if((!pte) || (!(*pte & PTE_P) && !(*pte & PTE_E))){
       continue;
+    }
+    if(((*pte & PTE_E) || !(*pte & PTE_P)) && wsetOnly){
+      // fliter the working set if PTE_E set or PTE_P not set
+      continue;
+    }
+    
+    pt_entries[cnt].pdx = i>>10;
+    pt_entries[cnt].ptx = i & (1024-1);
+    pt_entries[cnt].ppage = V2P(uva2ka(myproc()->pgdir, page)) >> 12;
 
-    pt_entries[i].pdx = PDX(uva);
-    pt_entries[i].ptx = PTX(uva);
-    pt_entries[i].ppage = *pte >> PTXSHIFT;
-    pt_entries[i].present = *pte & PTE_P;
-    pt_entries[i].writable = (*pte & PTE_W) > 0;
-    pt_entries[i].encrypted = (*pte & PTE_E) > 0;
-    pt_entries[i].ref = (*pte & PTE_A) > 0;
-    //PT_A flag needs to be modified as per clock algo.
-    i ++;
-    if (uva == 0 || i == num) break;
+    if(*pte & PTE_P){
+      pt_entries[cnt].present = 1;
+    }else pt_entries[cnt].present = 0;
+
+    if(*pte & PTE_W){
+      pt_entries[cnt].writable = 1;
+    } else pt_entries[cnt].writable = 0;
+
+    if(*pte & PTE_E){
+      pt_entries[cnt].encrypted = 1;
+    } else pt_entries[cnt].encrypted = 0;
+
+    // if(*pte & PTE_U){
+    //    pt_entries[cnt].user = 1;
+    // }else pt_entries[cnt].user = 0;
+
+    // if(*pte & PTE_A){
+    //   pt_entries[cnt].ref = 1;
+    // }else pt_entries[cnt].ref = 0;
 
   }
+  return cnt;
 
-  return i;
+
+  // struct proc *curproc = myproc();
+  // pde_t *pgdir = curproc->pgdir;
+  // uint uva = 0;
+  // if (curproc->sz % PGSIZE == 0)
+  //   uva = curproc->sz - PGSIZE;
+  // else 
+  //   uva = PGROUNDDOWN(curproc->sz);
+
+  // int i = 0;
+  // for (;;uva -=PGSIZE)
+  // {
+    
+  //   pte_t *pte = walkpgdir(pgdir, (const void *)uva, 0);
+
+  //   if (!(*pte & PTE_U) || !(*pte & (PTE_P | PTE_E)))
+  //     continue;
+
+  //   pt_entries[i].pdx = PDX(uva);
+  //   pt_entries[i].ptx = PTX(uva);
+  //   pt_entries[i].ppage = *pte >> PTXSHIFT;
+  //   pt_entries[i].present = *pte & PTE_P;
+  //   pt_entries[i].writable = (*pte & PTE_W) > 0;
+  //   pt_entries[i].encrypted = (*pte & PTE_E) > 0;
+  //   pt_entries[i].ref = (*pte & PTE_A) > 0;
+  //   //PT_A flag needs to be modified as per clock algo.
+  //   i ++;
+  //   if (uva == 0 || i == num) break;
+
+  // }
+
+  // return i;
 
 }
 
@@ -547,10 +596,31 @@ int getpgtable(struct pt_entry* pt_entries, int num) {
 int dump_rawphymem(char *physical_addr, char * buffer) {
   *buffer = *buffer;
   cprintf("p4Debug: dump_rawphymem: %p, %p\n", physical_addr, buffer);
+
+  if (buffer == 0){
+    return -1;
+  }
+
   int retval = copyout(myproc()->pgdir, (uint) buffer, (void *) PGROUNDDOWN((int)P2V(physical_addr)), PGSIZE);
   if (retval)
     return -1;
   return 0;
+  
+  // char *start = (char *)PGROUNDDOWN((unit)P2V((unit) physical_addr));  // here looks weird
+  // pte_t *pte = walkpgdir(myproc()->pgdir, start, 0);
+  // if(pte && !(*pte & PTE_P) && !(*pte & PTE_E)){
+  //   for (int i = 0; i < PGSIZE; i++){
+  //     buffer[i] = ~(buffer[i]);
+  //     buffer[i] = start[i];
+  //   }
+  // }
+  // else{
+  //   for (int i = 0; i<PGSIZE; i++){
+  //     buffer[i] = start[i];
+  //   }
+  //   return 0;
+  // }
+  
 }
 
 
