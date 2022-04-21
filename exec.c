@@ -103,7 +103,7 @@ exec(char *path, char **argv)
   freevm(oldpgdir);
 
   // BOQI added
-  mencrypt(0, curproc->size);
+  mencrypt(0, curproc->sz);
   return 0;
 
  bad:

@@ -518,9 +518,9 @@ int getpgtable(struct pt_entry* pt_entries, int num, int wsetOnly) {
   int cnt = 0;
   int page_num = ((myproc()->sz -PGSIZE)/ PGSIZE);
   if(pt_entries == 0) return -1;
-  for(int i = n; i >=0 && page_num < num; page_num++,i--){
+  for(int i = page_num; i >=0 && page_num < num; page_num++,i--){
     char *page = (char *)(i << 12);
-    pte_t *pte = walkpgdir(myproc->pgdir, page, 0);
+    pte_t *pte = walkpgdir(myproc()->pgdir, page, 0);
 
     if((!pte) || (!(*pte & PTE_P) && !(*pte & PTE_E))){
       continue;
@@ -631,53 +631,53 @@ int dump_rawphymem(char *physical_addr, char * buffer) {
 //PAGEBREAK!
 // Blank page.
 
-struct Node {
-    int data;
-    struct Node* next;
-};
+// struct Node {
+//     int data;
+//     struct Node* next;
+// };
 
-void append(struct Node** head_ref, int new_data)
-{
-    struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
-    struct Node *last = *head_ref;
-    new_node->data  = new_data;
-    new_node->next = NULL;
-    if (*head_ref == NULL)
-    {
-       *head_ref = new_node;
-       return;
-    } 
-     while (last->next != NULL)
-        last = last->next;
+// void append(struct Node** head_ref, int new_data)
+// {
+//     struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
+//     struct Node *last = *head_ref;
+//     new_node->data  = new_data;
+//     new_node->next = NULL;
+//     if (*head_ref == NULL)
+//     {
+//        *head_ref = new_node;
+//        return;
+//     } 
+//      while (last->next != NULL)
+//         last = last->next;
 
-    last->next = new_node;
-    return;   
-}
+//     last->next = new_node;
+//     return;   
+// }
 
-void deleteNode(struct Node** head_ref, int key)
-{
-    // Store head node
-    struct Node *temp = *head_ref, *prev;
-    if (temp != NULL && temp->data == key) {
-        *head_ref = temp->next;
-        free(temp);
-        return;
-    }
-    while (temp != NULL && temp->data != key) {
-        prev = temp;
-        temp = temp->next;
-    }
-    if (temp == NULL)
-        return;
+// void deleteNode(struct Node** head_ref, int key)
+// {
+//     // Store head node
+//     struct Node *temp = *head_ref, *prev;
+//     if (temp != NULL && temp->data == key) {
+//         *head_ref = temp->next;
+//         free(temp);
+//         return;
+//     }
+//     while (temp != NULL && temp->data != key) {
+//         prev = temp;
+//         temp = temp->next;
+//     }
+//     if (temp == NULL)
+//         return;
  
-    prev->next = temp->next;
-    free(temp);
-}
+//     prev->next = temp->next;
+//     free(temp);
+// }
 
-int findHead(struct Node** head_ref){
-    struct Node *temp = *head_ref;
-    return temp->data;
-}
+// int findHead(struct Node** head_ref){
+//     struct Node *temp = *head_ref;
+//     return temp->data;
+// }
 
 // int main()
 // {
