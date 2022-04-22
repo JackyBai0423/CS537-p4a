@@ -33,6 +33,11 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// Secret linked list
+typedef struct clk_node {
+    uint vpn;
+    pte_t *pte;
+} node_c;
 
 // Per-process state
 struct proc {
@@ -49,6 +54,15 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // ADDED for Linked List
+  // Not sure if this array is actually needed
+  //node_t clockQ[CLOCKSIZE];    // Per Process Clock Queue
+  //node_t *head;         // Head of the Clock Queue 
+  //int numElements;             // TA said useful to have numElements in clockQueue
+  // Secret Linked List shit
+  node_c clk_queue[CLOCKSIZE];
+  int clk_hand;
 };
 
 // Process memory is laid out contiguously, low addresses first:

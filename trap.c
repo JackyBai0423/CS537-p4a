@@ -36,6 +36,7 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+  int retval;
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -45,7 +46,7 @@ trap(struct trapframe *tf)
       exit();
     return;
   }
-  char *addr;
+
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
@@ -78,15 +79,15 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
   case T_PGFLT:
-    //Food for thought: How can one distinguish between a regular page fault and a decryption request?
-    cprintf("p4Debug : Page fault !\n");
-    addr = (char*)rcr2();
-    if (mdecrypt(addr))
-    {
-        panic("p4Debug: Memory fault");
-        exit();
-    };
-    break;
+    retval = decrypt((char*)rcr2());
+    // Decryption was successful
+    if(retval == 0){
+      //TODO: Ta said to return from trap, I think you just call return?
+      return;
+      break;
+    }
+    // Otherwise there was an actual pagefault
+    
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){

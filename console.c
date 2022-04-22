@@ -59,8 +59,7 @@ cprintf(char *fmt, ...)
   char *s;
 
   locking = cons.locking;
-  //changed: added holding check
-  if(locking && !holding(&cons.lock))
+  if(locking)
     acquire(&cons.lock);
 
   if (fmt == 0)
@@ -88,10 +87,6 @@ cprintf(char *fmt, ...)
         s = "(null)";
       for(; *s; s++)
         consputc(*s);
-      break;
-    case 'c':
-      s = (char*)argp++;
-      consputc(*(s));
       break;
     case '%':
       consputc('%');
