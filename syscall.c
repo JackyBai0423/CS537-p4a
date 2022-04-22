@@ -130,6 +130,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+//Syscall declarations
 [SYS_mencrypt] sys_mencrypt,
 [SYS_getpgtable] sys_getpgtable,
 [SYS_dump_rawphymem] sys_dump_rawphymem,

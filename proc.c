@@ -114,8 +114,8 @@ found:
   p->context->eip = (uint)forkret;
 
   p->q_hand = -1;
-  for (int i=0; i<CLOCKSIZE; i++){
-    p->queue_array[i].vpn = -1;
+  for (int i = 0; i < CLOCKSIZE; i++) {
+    p->q_array[i].vpn = -1;
   }
   return p;
 }
@@ -160,25 +160,23 @@ userinit(void)
 
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
+
 int
 growproc(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
-
   sz = curproc->sz;
   uint oldsz = curproc->sz;
-
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
-    //add new thing BOQI
-    mencrypt((char*)oldsz, n/PGSIZE);
+    mencrypt((char*)oldsz, n / PGSIZE);
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
-  
-    uint page = PGROUNDDOWN(oldsz -1);
+    uint page = PGROUNDDOWN(oldsz - 1);
+    // Delete all pages
     while(page >= sz){
       remove_node(page);
       page -= PGSIZE;
@@ -188,7 +186,6 @@ growproc(int n)
   switchuvm(curproc);
   return 0;
 }
-
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -217,16 +214,16 @@ fork(void)
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
-
   pte_t *pte;
-   for(i = 0; i < CLOCKSIZE; i++){
-    pte = walkpgdir(np->pgdir, (char*)curproc->queue_array[i].vpn, 0);
-    np->queue_array[i].pte = pte;
-    np->queue_array[i].vpn = curproc->queue_array[i].vpn;
+  // Copy queue stuff for the new process
+  for(i = 0; i < CLOCKSIZE; i++){
+    //Might need to walkpagedir here
+    pte = walkpgdir(np->pgdir, (char*)curproc->q_array[i].vpn, 0);
+    np->q_array[i].pte = pte;
+    np->q_array[i].vpn = curproc->q_array[i].vpn;
 
   }
   np->q_hand = curproc->q_hand;
-
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);

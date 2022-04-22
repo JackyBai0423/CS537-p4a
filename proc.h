@@ -33,12 +33,11 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-
-typedef struct queue_node{
-  uint vpn;
-  pte_t *pte;
+// Secret linked list
+typedef struct q_node {
+    uint vpn;
+    pte_t *pte;
 } node_q;
-
 
 // Per-process state
 struct proc {
@@ -56,7 +55,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  node_q queue_array[CLOCKSIZE];
+  node_q q_array[CLOCKSIZE];
   int q_hand;
 };
 

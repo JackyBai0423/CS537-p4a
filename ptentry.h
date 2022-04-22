@@ -14,4 +14,4 @@ struct pt_entry {
     uint ref : 1;  // For part A, set to 1. For part B, 1 if page is referenced until last time enqueued.
 };
 
-#endif
+#endif // __PT_ENTRY_H__

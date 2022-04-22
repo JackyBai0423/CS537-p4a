@@ -87,13 +87,11 @@ exec(char *path, char **argv)
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
 
-  // Save program name for debugging.
   for(last=s=path; *s; s++)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
 
-  // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
   curproc->sz = sz;
@@ -102,11 +100,10 @@ exec(char *path, char **argv)
   switchuvm(curproc);
   freevm(oldpgdir);
 
-  // BOQI added
   mencrypt(0, sz/PGSIZE);
   curproc->q_hand = -1;
-  for(int i=0; i<CLOCKSIZE; i++){
-    curproc->queue_array[i].vpn =-1;
+  for (int i = 0; i < CLOCKSIZE; i++) {
+    curproc->q_array[i].vpn = -1;
   }
   return 0;
 
