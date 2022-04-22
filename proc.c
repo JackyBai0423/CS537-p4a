@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "ptentry.h"
 
 struct {
   struct spinlock lock;
@@ -112,6 +113,10 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  p->clk_hand = -1;
+  for (int i = 0; i < CLOCKSIZE; i++) {
+    p->clk_queue[i].vpn = -1;
+  }
   return p;
 }
 
@@ -155,31 +160,32 @@ userinit(void)
 
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
+
 int
 growproc(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
-
   sz = curproc->sz;
-
-  // add new thing  BOQI
-  int page_num = sz/PGSIZE;
-
+  uint oldsz = curproc->sz;
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
-    //add new thing BOQI
-    mencrypt((void*)curproc->sz,page_num);
+    mencrypt((char*)oldsz, n / PGSIZE);
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
+    uint page = PGROUNDDOWN(oldsz - 1);
+    // Delete all pages
+    while(page >= sz){
+      clk_remove(page);
+      page -= PGSIZE;
+    }
   }
   curproc->sz = sz;
   switchuvm(curproc);
   return 0;
 }
-
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -208,7 +214,16 @@ fork(void)
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
-
+  pte_t *pte;
+  // Copy queue stuff for the new process
+  for(i = 0; i < CLOCKSIZE; i++){
+    //Might need to walkpagedir here
+    pte = walkpgdir(np->pgdir, (char*)curproc->clk_queue[i].vpn, 0);
+    np->clk_queue[i].pte = pte;
+    np->clk_queue[i].vpn = curproc->clk_queue[i].vpn;
+    //np->clk_queue[i].pte = curproc->clk_queue[i].pte;
+  }
+  np->clk_hand = curproc->clk_hand;
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);

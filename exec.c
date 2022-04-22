@@ -101,9 +101,22 @@ exec(char *path, char **argv)
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);
-
-  // BOQI added
-  mencrypt(0, curproc->sz);
+  // Encyption here I think
+  mencrypt(0, sz/PGSIZE);
+  // Initialize Queue
+  /*curproc->head = 0;
+  curproc->numElements = 0;
+  // init all elements in the clockQ array to 0 here
+  for (int i = 0; i < CLOCKSIZE; i++) {
+    curproc->clockQ[i].vpn = -1;
+    curproc->clockQ[i].next = (node_t*)0;
+    curproc->clockQ[i].prev = (node_t*)0;
+    curproc->clockQ[i].pte = (pte_t*)0;
+  }*/
+  curproc->clk_hand = -1;
+  for (int i = 0; i < CLOCKSIZE; i++) {
+    curproc->clk_queue[i].vpn = -1;
+  }
   return 0;
 
  bad:

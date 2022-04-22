@@ -1,5 +1,3 @@
-#include "ptentry.h"
-// Header required for Page table related syscalls.
 struct buf;
 struct context;
 struct file;
@@ -124,6 +122,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 
@@ -188,11 +187,15 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
-//p4Debug : Added new syscalls
-int             mencrypt(char *virtual_addr, int len);
-int             getpgtable(struct pt_entry* pt_entries, int num, int wsetOnly);
-int             dump_rawphymem(char *physical_addr, char * buffer);
-int             mdecrypt(char *virtual_addr);
+// Added in 
+int             mencrypt(char*, int);
+int             getpgtable(struct pt_entry*, int, int);
+int             dump_rawphymem(uint, char*);
+int             decrypt(char*);
+//int             clockDelete(uint);
+//int				clockEvict(void);
+void            clk_remove(uint);
+pte_t*           walkpgdir(pte_t *, const void*, int);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
