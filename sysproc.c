@@ -91,49 +91,50 @@ sys_uptime(void)
   return xticks;
 }
 
-/******************************************************
-*                Added Sys Calls                      *
-******************************************************/
-/*
-int sys_mencrypt(void){
-  char *virtual_addr;
+//changed: added wrapper here
+int sys_mencrypt(void) {
   int len;
-  if(argint(1, &len) < 0){
+  char * virtual_addr;
+
+  if(argint(1, &len) < 0)
+    return -1;
+  if (len <= 0) {
     return -1;
   }
-  if(len == 0){
-    return 0;
-  }
-  if(argptr(0, (void*)&virtual_addr, sizeof(*virtual_addr)) < 0){
+  if(argptr(0, &virtual_addr, 1) < 0)
+    return -1;
+  if ((void *) virtual_addr >= P2V(PHYSTOP)) {
     return -1;
   }
   return mencrypt(virtual_addr, len);
-}*/
+}
 
-int sys_getpgtable(void){
-  struct pt_entry *entries;
+int sys_getpgtable(void) {
+  struct pt_entry * entries; 
   int num;
   int wsetOnly;
-  if(argptr(0, (void*)&entries, sizeof(*entries)) < 0){
+
+  if(argint(1, &num) < 0)
+    return -1;
+  if(argptr(0, (char**)&entries, num*sizeof(struct pt_entry)) < 0){
     return -1;
   }
-  if(argint(1, &num) < 0){
+  if(argint(1,&wsetOnly)<0)
     return -1;
-  }
-  if(argint(2, &wsetOnly) < 0){
-    return -1;
-  }
   return getpgtable(entries, num, wsetOnly);
 }
 
-int sys_dump_rawphymem(void){
-  int physical_addr;
-  char *buffer;
-  if(argint(0, &physical_addr) < 0){
+
+int sys_dump_rawphymem(void) {
+  char * physical_addr; 
+  char * buffer;
+
+  if(argptr(1, &buffer, PGSIZE) < 0)
     return -1;
-  }
-  if(argptr(1, (void*)&buffer, sizeof(*buffer)) < 0){
+  if(argint(0, (int*)&physical_addr) < 0)
     return -1;
-  }
-  return dump_rawphymem((uint)physical_addr, buffer);
+  return dump_rawphymem(physical_addr, buffer);
 }
+
+
+//should we add sys_decrpyt?
