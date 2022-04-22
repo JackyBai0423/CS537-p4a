@@ -79,14 +79,11 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
   case T_PGFLT:
-    retval = decrypt((char*)rcr2());
-    // Decryption was successful
+    retval = mdecrypt((char*)rcr2());
     if(retval == 0){
-      //TODO: Ta said to return from trap, I think you just call return?
       return;
       break;
     }
-    // Otherwise there was an actual pagefault
     
   //PAGEBREAK: 13
   default:
