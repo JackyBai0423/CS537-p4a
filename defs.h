@@ -1,4 +1,4 @@
-// #include "ptentry.h"
+#include "ptentry.h"
 // Header required for Page table related syscalls.
 struct buf;
 struct context;
@@ -189,10 +189,10 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 //p4Debug : Added new syscalls
-int             mencrypt(char *virtual_addr, int len);
-int             getpgtable(struct pt_entry* pt_entries, int num, int wsetOnly);
-int             dump_rawphymem(char *physical_addr, char * buffer);
-int             mdecrypt(char *virtual_addr);
+int             mencrypt(char*, int);
+int             getpgtable(struct pt_entry*, int, int);
+int             dump_rawphymem(int, char*);
+int             mdecrypt(char*);
 
 void            remove_node(uint);
 pte_t*          walkpgdir(pte_t *, const void*, int);
